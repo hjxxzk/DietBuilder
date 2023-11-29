@@ -1,2 +1,8 @@
-package dietBuilder.Model;public class Meal {
+package dietBuilder.Model;
+
+import java.util.ArrayList;
+
+public class Meal {
+    private String type;
+    ArrayList<Product> products;
 }

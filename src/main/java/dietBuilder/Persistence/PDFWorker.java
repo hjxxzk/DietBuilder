@@ -1,2 +1,4 @@
-package dietBuilder;public class PDFWorker {
+package dietBuilder.Persistence;
+
+public class PDFWorker {
 }
