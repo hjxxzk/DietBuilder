@@ -1,7 +1,7 @@
-package dietBuilder.GUI;
+package org.example.GUI;
 
-import dietBuilder.Model.Meal;
-import dietBuilder.Model.MealItem;
+import org.example.Model.Meal;
+import org.example.Model.MealItem;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -20,6 +20,7 @@ public class CreateMeal extends JFrame {
         setSize(300, 200);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setVisible(true);
+        setLocationRelativeTo(null);
         Create.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

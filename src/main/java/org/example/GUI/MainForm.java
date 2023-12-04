@@ -1,15 +1,19 @@
-package dietBuilder.GUI;
+package org.example.GUI;
 
-import dietBuilder.Model.Category;
-import dietBuilder.Model.Meal;
-import dietBuilder.Model.MealItem;
-import dietBuilder.Model.Product;
+import org.example.Model.Category;
+import org.example.Model.Meal;
+import org.example.Model.MealItem;
+import org.example.Model.Product;
+import org.example.Persistence.TXTFileWorker;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class MainForm extends JFrame {
     private JPanel mainPanel;
@@ -26,28 +30,42 @@ public class MainForm extends JFrame {
     private JComboBox CategoryBox;
     private JPanel ImagePanel;
     private JButton addToMealButton;
-    private JTextField textField1;
-    private JTextField textField2;
-    private JTextField textField3;
-    private JTextField textField4;
+    private JTextField Kcal;
+    private JTextField Carbs;
+    private JTextField Fats;
+    private JTextField Proteins;
     private JButton createMealButton;
     private JButton deleteMealButton;
     private JButton deleteFromMealButton;
     private JButton exportToPDFButton;
+    private JLabel NameLabel;
+    private JLabel CarbsLabel;
+    private JLabel FatsLabel;
+    private JLabel ProteinsLabel;
+    private JLabel CategoryLabel;
+    private JLabel appname;
+    ArrayList<Product> products;
+    ArrayList<Meal> meals;
+    TXTFileWorker worker;
+    public MainForm(ArrayList<Product> products, ArrayList<Meal> meals, TXTFileWorker worker) {
 
-    public MainForm(ArrayList<Product> products, ArrayList<Meal> meals) {
-
-        setMealsBox(meals);
-        makeTable(products);
-        makeMealTable(meals);
+        this.products = products;
+        this.meals = meals;
+        this.worker = worker;
+        makeTable();
+        setMealsBox();
+        makeMealTable();
         setContentPane(mainPanel);
+        Kcal.setEditable(false);
+        Carbs.setEditable(false);
+        Proteins.setEditable(false);
+        Fats.setEditable(false);
         setTitle("Diet Builder");
-        setSize(1000, 700);
+        setSize(1000, 800);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
-
+        setLocationRelativeTo(null);
         DefaultTableModel tblModel = (DefaultTableModel)table1.getModel();
-        DefaultTableModel tblModel2 = (DefaultTableModel)table2.getModel();
 
         table1.addMouseListener(new MouseAdapter() {
             @Override
@@ -129,7 +147,7 @@ public class MainForm extends JFrame {
                         product.setCarbs(Double.parseDouble(Carbs));
                         product.setFats(Double.parseDouble(Fats));
                         product.setProteins(Double.parseDouble(Proteins));
-                        product.setCategory(dietBuilder.Model.Category.valueOf(Category));
+                        product.setCategory(org.example.Model.Category.valueOf(Category));
 
                         tblModel.setValueAt(Name, table1.getSelectedRow(), 0);
                         tblModel.setValueAt(Carbs, table1.getSelectedRow(), 1);
@@ -159,7 +177,7 @@ public class MainForm extends JFrame {
         deleteMealButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                meals.removeIf(product -> product.equals(Objects.requireNonNull(CategoryBox.getSelectedItem()).toString()));
+                meals.remove(MealsBox.getSelectedIndex());
                 MealsBox.removeItem(MealsBox.getSelectedItem());
 
             }
@@ -167,43 +185,79 @@ public class MainForm extends JFrame {
         addToMealButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String type = Objects.requireNonNull(CategoryBox.getSelectedItem()).toString();
-                Product product = new Product(NameField.getText(),Double.parseDouble(CarbsField.getText()), Double.parseDouble(FatsField.getText()), Double.parseDouble(ProteinsField.getText()), Category.valueOf(type));
 
-                new AddToMeal(meals, type, product, tblModel2);
+                if(table1.getSelectedRowCount() == 1) {
+                    String type = Objects.requireNonNull(CategoryBox.getSelectedItem()).toString();
+                    String meal = Objects.requireNonNull(MealsBox.getSelectedItem()).toString();
+                    Product product = new Product(NameField.getText(), Double.parseDouble(CarbsField.getText()), Double.parseDouble(FatsField.getText()), Double.parseDouble(ProteinsField.getText()), Category.valueOf(type));
+
+                    SwingUtilities.invokeLater(() -> {
+                        AddToMeal addToMeal = new AddToMeal(meals, meal, product);
+                        addToMeal.addWindowListener(new WindowAdapter() {
+                            @Override
+                            public void windowClosed(WindowEvent e) {
+                                makeMealTable();
+                            }
+                        });
+                    });
+                } else if (table1.getSelectedRowCount() == 0) {
+                    JOptionPane.showMessageDialog(MainForm.this, "No row selected");
+                }   else {
+                    JOptionPane.showMessageDialog(MainForm.this, "Please select a single row");
+                }
             }
         });
         MealsBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                makeMealTable(meals);
+                makeMealTable();
             }
         });
         deleteFromMealButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if(table2.getSelectedRowCount() == 1)   {
+                int selectedRow = table2.getSelectedRow();
 
-                if(table2.getSelectedRowCount() == 1) {
+                if (selectedRow != -1) {
+                    String selectedMealType = Objects.requireNonNull(MealsBox.getSelectedItem()).toString();
+
                     meals.stream()
-                                    .filter(Meal -> Meal.getType().equals(Objects.requireNonNull(CategoryBox.getSelectedItem()).toString()))
-                                            .findFirst()
-                                                    .ifPresent(Meal -> Meal.getItems().remove(table2.getSelectedRow()));    // POSSIBLY WRONG
-                    tblModel2.removeRow(table2.getSelectedRow());
-                    tblModel2.fireTableDataChanged();
-                }   else if (table2.getSelectedRowCount() == 0) {
-                    JOptionPane.showMessageDialog(MainForm.this, "No row selected");
-                }   else {
-                    JOptionPane.showMessageDialog(MainForm.this, "Please select a single row");
+                            .filter(meal -> meal.getType().equals(selectedMealType))
+                            .findFirst()
+                            .ifPresent(meal -> {
+                                    meal.getItems().remove(selectedRow);
+                            });
+
+                    makeMealTable();
                 }
-                makeMealTable(meals);
+                } else {
+                    JOptionPane.showMessageDialog(MainForm.this, "No row selected");
+                }
+            }
+        });
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                worker.writeProducts(products);
+                worker.writeMeals(meals);
+                System.exit(0);
+            }
+        });
+        exportToPDFButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                new ExportToPDF(meals);
             }
         });
     }
 
-    private void makeTable(ArrayList<Product> products)    {
+    private void makeTable()    {
 
         Object[][] data = products.stream()
-                        .map(Product -> new Object[]{Product.getName(), Product.getCarbs(), Product.getFats(), Product.getProteins(), Product.getCategory().toString()})
+                        .map(Product -> new Object[]{Product.getName(), round(Product.getCarbs()), round(Product.getFats()), round(Product.getProteins()), Product.getCategory().toString()})
                                 .toArray(Object[][]::new);
 
         table1.setModel(new DefaultTableModel(
@@ -212,28 +266,69 @@ public class MainForm extends JFrame {
         ));
     }
 
-    private void makeMealTable(ArrayList<Meal> meal)    {
+    public void makeMealTable()    {
 
-        ArrayList<MealItem> items = meal.stream()
+        ArrayList<MealItem> items = meals.stream()
                 .filter(Meal -> Meal.getType().equals(Objects.requireNonNull(MealsBox.getSelectedItem()).toString()))
                 .findFirst()
                 .map(Meal::getItems)
                 .orElse(new ArrayList<>());
 
         Object[][] data = items.stream()
-                .map(MealItem -> new Object[]{MealItem.getProduct().getName(), MealItem.getProduct().getCarbs(), MealItem.getProduct().getFats(), MealItem.getProduct().getProteins(), MealItem.getWeight()})
+                .map(MealItem -> new Object[]{MealItem.getProduct().getName(), round(MealItem.getProduct().getCarbs()), round(MealItem.getProduct().getFats()), round(MealItem.getProduct().getProteins()), round(MealItem.getWeight())})
                 .toArray(Object[][]::new);
 
         table2.setModel(new DefaultTableModel(
                 data,
-                new String[]{"Name", "Carbs", "Fats", "Proteins", "Weight"}
+                new String[]{"Name", "Carbs", "Fats", "Proteins", "Weight [g]"}
         ));
+        calculate();
     }
 
-    private void setMealsBox(ArrayList<Meal> meals)  {
-
+    private void setMealsBox()  {
         meals.forEach(Meal -> MealsBox.addItem(String.valueOf(Meal.getType())));
+    }
+
+    private void calculate()  {
+
+        double car, pro, fat;
+        double kcal = 0.0;
+        car = meals.stream()
+                .filter(meal -> meal.getType().equals(Objects.requireNonNull(MealsBox.getSelectedItem()).toString()))
+                .findFirst()
+                .map(meal -> meal.getItems().stream()
+                        .mapToDouble(mealItem -> mealItem.getProduct().getCarbs())
+                        .sum())
+                .orElse(0.0);
+        Carbs.setText(String.valueOf(round(car)));
+
+        pro = meals.stream()
+                .filter(meal -> meal.getType().equals(Objects.requireNonNull(MealsBox.getSelectedItem()).toString()))
+                .findFirst()
+                .map(meal -> meal.getItems().stream()
+                        .mapToDouble(mealItem -> mealItem.getProduct().getProteins())
+                        .sum())
+                .orElse(0.0);
+        Proteins.setText(String.valueOf(round(pro)));
+
+        fat = meals.stream()
+                .filter(meal -> meal.getType().equals(Objects.requireNonNull(MealsBox.getSelectedItem()).toString()))
+                .findFirst()
+                .map(meal -> meal.getItems().stream()
+                        .mapToDouble(mealItem -> mealItem.getProduct().getFats())
+                        .sum())
+                .orElse(0.0);
+        Fats.setText(String.valueOf(round(fat)));
+        kcal = ( car + pro ) * 4 + fat * 9;
+        Kcal.setText(String.valueOf(round(kcal)));
 
     }
+
+    private static double round(double value) {
+        BigDecimal bd = BigDecimal.valueOf(value);
+        bd = bd.setScale(2, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
+
 
 }

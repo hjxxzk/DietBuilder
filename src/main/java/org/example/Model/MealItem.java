@@ -1,8 +1,8 @@
-package dietBuilder.Model;
+package org.example.Model;
 
 public class MealItem {
 
-    private final double weight;
+    private double weight;
     private final Product product;
 
     public Product getProduct() {
@@ -11,6 +11,10 @@ public class MealItem {
 
     public double getWeight() {
         return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 
     public MealItem(Product product, double weight) {

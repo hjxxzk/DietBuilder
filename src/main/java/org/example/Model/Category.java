@@ -1,4 +1,4 @@
-package dietBuilder.Model;
+package org.example.Model;
 
 public enum Category {
 

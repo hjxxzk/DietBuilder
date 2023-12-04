@@ -1,45 +1,30 @@
-package dietBuilder.Persistence;
+package org.example.Persistence;
 
-import dietBuilder.Model.Category;
-import dietBuilder.Model.Meal;
-import dietBuilder.Model.MealItem;
-import dietBuilder.Model.Product;
+import org.example.Model.Category;
+import org.example.Model.Meal;
+import org.example.Model.MealItem;
+import org.example.Model.Product;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class TXTFileWorker {
 
-    public static String getURL(String filename)   {
+    private final String productsPath;
+    private final String mealsPath;
 
-        ClassLoader classLoader = TXTFileWorker.class.getClassLoader();
-        URL data = classLoader.getResource(filename);
-
-        if(data != null) {
-            try {
-                URI uri = data.toURI();
-                Path path = Paths.get(uri);
-                return path.toString();
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
+    public TXTFileWorker(String productsPath, String mealsPath) {
+        this.mealsPath = mealsPath;
+        this.productsPath = productsPath;
     }
 
-    public static ArrayList<Product> readProducts() {
+    public ArrayList<Product> readProducts() {
 
         ArrayList<Product> products = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(getURL("Products.txt")))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(productsPath))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(";");
@@ -57,15 +42,14 @@ public class TXTFileWorker {
         return products;
     }
 
-    public static ArrayList<Meal> readMeals()   {
+    public ArrayList<Meal> readMeals()   {
 
         ArrayList<MealItem> items = new ArrayList<>();
         ArrayList<Meal> meals = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader(getURL("Meals.txt")))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(mealsPath))) {
             String line;
             while((line = br.readLine()) != null)    {
-
                 if(line.startsWith("%"))    {
                     items = new ArrayList<>();
                     line = line.substring(1).trim();
@@ -88,15 +72,15 @@ public class TXTFileWorker {
         return meals;
     }
 
-    public static void writeProducts(ArrayList<Product> products)  {
-        try (FileWriter fileWriter = new FileWriter(Objects.requireNonNull(getURL("Products.txt")))) {
+    public void writeProducts(ArrayList<Product> products)  {
+        try (FileWriter fileWriter = new FileWriter(productsPath, false)) {
             for (Product product : products) {
-                String line = String.format("%s;%.1f;%.1f;%.1f;%s;%n",
-                        product.getName(),
-                        product.getCarbs(),
-                        product.getFats(),
-                        product.getProteins(),
-                        product.getCategory().name());
+                String line =
+                        product.getName() + ";" +
+                        product.getCarbs() + ";" +
+                        product.getFats() + ";" +
+                        product.getProteins() + ";" +
+                        product.getCategory().name().toUpperCase() + ";" + "\n";
                 fileWriter.write(line);
             }
         } catch (IOException e) {
@@ -104,21 +88,21 @@ public class TXTFileWorker {
         }
     }
 
-    public static void writeMeals(ArrayList<Meal> meals)    {
-        try (FileWriter fileWriter = new FileWriter(Objects.requireNonNull(getURL("Meals.txt")))) {
+    public void writeMeals(ArrayList<Meal> meals)    {
+        try (FileWriter fileWriter = new FileWriter(mealsPath, false)) {
             for (Meal meal : meals) {
-                String line = String.format("%%%s%n", meal.getType());
+                StringBuilder lineBuilder = new StringBuilder("%" + meal.getType() + "\n");
 
                 for (MealItem mealItem : meal.getItems()) {
-                    line += String.format("%s;%.1f;%.1f;%.1f;%s;%n;%.1f;%n",
-                            mealItem.getProduct().getName(),
-                            mealItem.getProduct().getCarbs(),
-                            mealItem.getProduct().getFats(),
-                            mealItem.getProduct().getProteins(),
-                            mealItem.getProduct().getCategory().name(),
-                            mealItem.getWeight());
+                    lineBuilder.append(mealItem.getProduct().getName()).append(";")
+                            .append(mealItem.getProduct().getCarbs()).append(";")
+                            .append(mealItem.getProduct().getFats()).append(";")
+                            .append(mealItem.getProduct().getProteins()).append(";")
+                            .append(mealItem.getProduct().getCategory().name().toUpperCase()).append(";")
+                            .append(mealItem.getWeight()).append(";").append("\n");
                 }
 
+                String line = lineBuilder.toString();
                 fileWriter.write(line);
             }
         } catch (IOException e) {

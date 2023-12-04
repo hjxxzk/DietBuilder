@@ -1,4 +1,4 @@
-package dietBuilder.Model;
+package org.example.Model;
 
 import java.util.ArrayList;
 
@@ -13,10 +13,6 @@ public class Meal {
 
     public ArrayList<MealItem> getItems() {
         return items;
-    }
-
-    public void setItems(ArrayList<MealItem> items) {
-        this.items = items;
     }
 
     public String getType() {
