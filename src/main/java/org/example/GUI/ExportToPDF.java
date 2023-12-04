@@ -49,6 +49,7 @@ public class ExportToPDF extends JFrame {
                 selected.forEach(Meal -> items.addAll(Meal.getItems()));
                 ShoppingList list = new ShoppingList(items);
                 PDFWorker.exportToPDF(list.getBuy());
+                JOptionPane.showMessageDialog(ExportToPDF.this, "Exported successfully");
                 dispose();
             }
         });
