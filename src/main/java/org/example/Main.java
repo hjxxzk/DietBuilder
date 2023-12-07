@@ -10,9 +10,9 @@ import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) {
-        String a = "C:/Users/agnie/IdeaProjects/Laboratorium_44/target/Products.txt";
-        String b = "C:/Users/agnie/IdeaProjects/Laboratorium_44/target/Meals.txt";
-        TXTFileWorker worker = new TXTFileWorker(a, b);
+        String productsTXTPath = args[0];
+        String mealsTXTPath = args[1];
+        TXTFileWorker worker = new TXTFileWorker(productsTXTPath, mealsTXTPath);
         ArrayList<Product> products = worker.readProducts();
         ArrayList<Meal> meals = worker.readMeals();
 
